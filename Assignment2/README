@@ -1,0 +1,137 @@
+Assignment 2 - Buffer Manager
+------------------------------------------------------------------
+Submitted by Group No. 16
+
+1. Deepa Bada (dbada@hawk.iit.edu)
+2. Krishnachaitanya Kilari (kkilari@hawk.iit.edu)
+3. Varun Gunda (vgunda2@hawk.iit.edu)
+
+------------------------------------------------------------------
+The following files were there in this assignment :  
+1. buffer_mgr.c
+2. buffer_mgr.h
+3. storage_mgr.c
+4. storage_mgr.h
+5. buffer_mgr_stat.c
+6. buffer_mgr_stat.h
+7. dt.h
+8. test_assign2_1.c
+9. test_assign2_2.c
+10. test_helper.h
+11. dberror.c
+12. dberror.h
+13. Makefile
+14. README
+
+---------------------------------Makefile--------------------------
+
+To create the executables, you can execute the below command:
+1. make all
+
+The above command creates output files "test_1" and "test_2". These can be then executed using "./test_1" and "./test_2"
+
+To clean the output files created use the command:"make clean"
+
+---------------------------------About test Cases--------------------------
+
+About Test Cases:
+
+We have implemented few extra tests in test_assign2_1.c and test_assign2_2.c.
+Extra test cases in test_assign2_1.c:
+    1. We have added testReadPage2 (). It uses a buffer pool of size 5. This test checks the working of following functions
+        createPageFile
+        initBufferPool
+        pinPage
+        markDirty
+        unpinPage
+        forcePage
+        shutdownBufferPool
+        destroyPageFile
+    2. We have added extra case to check in testCreatingAndReadingDummyPages() function to test for the case where 
+        number of pages is 500.
+
+Extra test cases in test_assign2_2.c:
+    1. We have added extra case in testError() function to consider the case where invalid handle is passed to pinPage function
+
+
+--------------------------------buffer_mgr.c---------------------------------
+The implementation of each function in buffer_mgr.c is described as follows and then these are the interfaces that are declared in buffer_mgr.h :
+
+Note on mgmtData:
+    We have used two datastructures for implementing buffer manager.
+        1. pageTableData: This is a structure which stores the foloowing:
+            a. Page Table.
+            b. Number of read operations
+            c. Number of write operations
+            d. Number of Pages loaded into buffer pool
+        2. pageTable: This ia structure which stores the following information for each page frame loaded into the buffer pool
+            a. Pin Counter
+            b. Timestamp
+            c. Dirty bit 
+            d. Buffer manager Page Handle
+            e. Storage manager Page Handle
+
+
+RC initBufferPool:
+	In this function a new Buffer pool is created with the passed parameters.
+
+Function Description :
+
+initBufferPool():
+    This creates a new buffer pool with numPages page frames using the page replacement strategy. This function
+    initializes the mgmtData as well. 
+
+shutdownBufferPool():
+    This destroys a buffer pool by clearing all the allocated memory effectively.
+
+forceFlushPool():
+    This checks for the pages with dirty bit set and writes them to disk
+
+Page Management Functions:
+
+pinPage():
+    Pins the page from disk to buffer pool if the page is not already stored in the buffer pool. This uses the given
+    strategy by "bm" to make decisions about page replacement.
+
+unpinPage():
+    Unpins the page.
+
+markDirty():
+    Marks a page as dirty.
+
+forcePage():
+    Writes content of a page to the disk.
+
+In all the above functions, the mgmtData (like pageTable and pageTableData) are updated as when required.
+
+Statistics Functions:
+
+The getFrameContents function , getDirtyFlags function, getFixCounts function , getNumReadIO function, getNumWriteIO 
+function perform their intended use.
+
+
+-------------------------------------Logic-------------------------------------------------------------------------------
+
+FIFO:
+    For FIFO, the buffer manager makes decision on which page have to be removed from the pool based on the time of
+    arrival of the page into buffer pool. It also check for the pin count of the earliest arrived page and if it is 
+    non zero, then the buffer manager goes for next page that entered the buffer pool and checks for its pin count and 
+    the process repeats until it gets a page to evict.
+
+LRU:
+    For LRU, the buffer manager makes decision on which page have to be removed from the pool based on last time of access
+    of the pages in the buffer bool. Even this strategy checks for the pin count of the page and if it is non zero, it goes 
+    to the next best page to be evicted and checks its pin count and so on until it finds the page to remove from buffer pool.
+
+In both the above approaches, while removing the page, dirty bit of that page frame is checked. If it is set, then the 
+content is written back to the disk before removing it from buffer pool.
+
+--------------------------------------About Headerfiles--------------------------------------------------------------------------
+Note on Header files:
+    We have used following additional header files for our strategy
+        <stdlib.h>
+        <time.h> 
+        <sys/time.h> 
+        <limits.h>
+        <unistd.h>
+        <string.h>
